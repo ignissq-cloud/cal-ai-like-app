@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, Check, ChevronLeft, Footprints, Heart, Layers, Lightbulb, Plus, Sun, Target, Utensils, UtensilsCrossed, Zap, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Camera, Check, ChevronLeft, Eye, Footprints, Heart, Plus, Sun, Target, UtensilsCrossed, Zap, type LucideIcon } from 'lucide-react';
 import type { CustomStepProps, OnboardingProfile } from './types';
 import { buildPrinciples, buildReflection, buildReflectionClosing } from './summary';
 import { askCoach, type CoachMessage } from '../services/coach';
@@ -536,79 +536,128 @@ function BasicsStep({ profile, update }: CustomStepProps) {
   );
 }
 
-// --- Why we're different: Food → Context → Understanding → Action ------------
+// --- Screen 4: why we're different -------------------------------------------
+// Recreated from `onboarding screens/fourth onboarding screen .png`: the
+// Food → Context → Understanding → Action flow on a warm cream background.
+// The heading and card copy live in the step config (`steps.ts`); this
+// component renders the mockup's bespoke design: its own three-segment
+// progress (third segment active), Skip pill, four fixed-height cards,
+// centered reassurance line, CTA and page dots.
 
 const FLOW_STAGES = [
-  {
-    icon: Utensils,
-    label: 'Food',
-    title: 'What you ate',
-    text: "A photo or a quick description of the meal — that's all you have to do.",
-  },
-  {
-    icon: Layers,
-    label: 'Context',
-    title: 'Everything around it',
-    text: 'Your goal, preferences, routine, habits and recent patterns.',
-  },
-  {
-    icon: Lightbulb,
-    label: 'Understanding',
-    title: 'What it means for you',
-    text: "Not a generic score — what it means for your day and what you're working toward.",
-  },
-  {
-    icon: Zap,
-    label: 'Action',
-    title: 'What to do next',
-    text: 'One clear step that fits your real life, your next meal and your goal.',
-  },
+  { icon: Camera, label: 'Food', height: 80 },
+  { icon: Heart, label: 'Context', height: 80 },
+  { icon: Eye, label: 'Understanding', height: 67 },
+  { icon: Zap, label: 'Action', height: 80 },
 ];
 
-function WhyDifferentStep() {
+/** The mockup's closing reassurance line (wraps to three centered lines). */
+const WHY_DIFFERENT_FOOTER =
+  "Your health is about more than what's on your plate. We're here to help you understand your habits and find what works for you.";
+
+function WhyDifferentStep({ step, goToStep, stepIndex }: CustomStepProps) {
+  const { leaving, advance } = useStepAdvance(goToStep, stepIndex);
+  const heading = step.heading ?? 'Most apps stop at the food.';
+  const body = step.body ?? [];
+
+  // The mockup breaks the heading after "stop"; keep that break (falling back
+  // to a natural wrap if the config copy ever changes).
+  const brk = heading.indexOf('stop');
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold leading-snug">Most apps stop at the food.</h1>
-        <p className="text-sm text-text-light leading-relaxed mt-2">
-          We look at everything around it, because the same meal means different things on
-          different days. Here's how one photo turns into advice that fits you:
-        </p>
+    <div
+      className={`flex flex-col min-h-[calc(100dvh_-_44px)] px-2 pb-[26px]${
+        leaving ? ' motion-safe:animate-[onb-exit_180ms_ease-in_backwards]' : ''
+      }`}
+    >
+      {/* Top row: the flow's back navigation, the mockup's three-segment
+          progress (third segment active) and its Skip pill. */}
+      <div className="flex items-center gap-2 motion-safe:animate-[onb-rise_400ms_ease-out_backwards]">
+        <button
+          type="button"
+          onClick={() => goToStep(stepIndex - 1)}
+          aria-label="Go back"
+          className="-ml-1 p-1 rounded-full text-[#5e2700]/60 hover:text-[#5e2700] hover:bg-white transition motion-safe:active:scale-90"
+        >
+          <ChevronLeft size={22} />
+        </button>
+        <span className="flex items-center gap-[6.5px]" aria-hidden="true">
+          <span className="w-4 h-1 rounded-full bg-[#e7ded2]" />
+          <span className="w-4 h-1 rounded-full bg-[#e7ded2]" />
+          <span className="w-[23px] h-1 rounded-full bg-[#5e2700]" />
+        </span>
+        <span className="flex-1" />
+        <button
+          type="button"
+          onClick={advance}
+          className="h-[46px] px-[21px] rounded-full bg-[#FBFBFA] text-[14px] font-semibold text-[#5e2700] transition motion-safe:active:scale-95"
+        >
+          Skip
+        </button>
       </div>
 
-      <ol className="relative">
-        {/* The thread tying the four stages together */}
-        <span
-          className="absolute left-[22px] top-6 bottom-6 w-px bg-slate-200"
-          aria-hidden="true"
-        />
-        {FLOW_STAGES.map(({ icon: Icon, label, title, text }, i) => {
-          const isLast = i === FLOW_STAGES.length - 1;
-          return (
-            <li key={label} className="relative flex gap-4">
-              <div className="relative shrink-0 w-11">
-                <span className="relative z-10 flex w-11 h-11 items-center justify-center rounded-full border border-slate-200 bg-surface">
-                  <Icon size={18} className="text-primary" aria-hidden="true" />
-                </span>
-                {!isLast && (
-                  <ArrowDown
-                    size={13}
-                    className="absolute left-1/2 -translate-x-1/2 -bottom-2 z-10 text-slate-400 bg-background"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-              <div className={`min-w-0 flex-1 ${isLast ? 'pb-0' : 'pb-5'}`}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">
-                  {label}
-                </p>
-                <p className="text-sm font-semibold mt-0.5">{title}</p>
-                <p className="text-xs text-text-light leading-relaxed mt-1">{text}</p>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      <h2
+        style={{ animationDelay: '50ms' }}
+        className="mt-[10px] text-[29.5px] leading-[38px] font-bold text-[#5e2700] motion-safe:animate-[onb-rise_400ms_ease-out_backwards]"
+      >
+        {brk >= 0 ? (
+          <>
+            {heading.slice(0, brk + 4)}
+            <br />
+            {heading.slice(brk + 4)}
+          </>
+        ) : (
+          heading
+        )}
+      </h2>
+
+      <div className="mt-[28px] space-y-[13px]">
+        {FLOW_STAGES.map(({ icon: Icon, label, height }, i) => (
+          <div
+            key={label}
+            style={{ height, animationDelay: `${110 + i * 50}ms` }}
+            className="flex items-center gap-[14px] pl-3 pr-4 rounded-[10px] bg-[#FBFBFA] ring-1 ring-[#f1ece4] shadow-[0_1px_2px_rgba(94,39,0,0.05)] motion-safe:animate-[onb-rise_400ms_ease-out_backwards]"
+          >
+            <span className="shrink-0 w-10 h-10 rounded-full bg-[#e7ded2] flex items-center justify-center">
+              <Icon size={20} className="text-[#5e2700]" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] leading-[16px] font-semibold text-[#1e1914]">{label}</p>
+              <p className="mt-[11.5px] text-[11.8px] leading-[17.5px] text-[#915a3c]">{body[i]}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Flexible spacer keeps the reassurance line, CTA and page dots
+          anchored to the bottom, like the mockup. */}
+      <div className="flex-1 min-h-6" />
+
+      <p
+        style={{ animationDelay: '260ms' }}
+        className="mx-auto max-w-[308px] mt-5 text-center text-[13.75px] leading-[22.5px] text-[#915a3c] motion-safe:animate-[onb-rise_400ms_ease-out_backwards]"
+      >
+        {WHY_DIFFERENT_FOOTER}
+      </p>
+
+      <button
+        type="button"
+        onClick={advance}
+        style={{ animationDelay: '300ms' }}
+        className="w-full h-14 mt-5 rounded-full bg-[#5e2700] text-base font-semibold text-[#FBFBFA] transition hover:bg-[#4a1f00] motion-safe:animate-[onb-rise_400ms_ease-out_backwards] motion-safe:active:scale-[0.98]"
+      >
+        Continue
+      </button>
+
+      <div
+        style={{ animationDelay: '340ms' }}
+        className="mt-[17px] flex items-center justify-center gap-[6.5px] motion-safe:animate-[onb-rise_400ms_ease-out_backwards]"
+        aria-hidden="true"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-[#e7ded2]" />
+        <span className="w-1.5 h-1.5 rounded-full bg-[#e7ded2]" />
+        <span className="w-2 h-2 rounded-full bg-[#5e2700]" />
+      </div>
     </div>
   );
 }

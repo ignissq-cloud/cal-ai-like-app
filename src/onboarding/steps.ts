@@ -71,11 +71,22 @@ export const STEPS: StepDef[] = [
     bgClass: 'bg-[#F3EEE6]',
   },
   {
+    // Screen 4 is a bespoke design (`onboarding screens/fourth onboarding screen .png`).
+    // The heading and card copy stay here; the screen renders them with its own design.
     kind: 'custom',
     id: 'why-different',
     component: WhyDifferentStep,
-    continueLabel: 'Keep going',
+    heading: 'Most apps stop at the food.',
+    body: [
+      'What you ate, logged with a photo or a quick description.',
+      'Your goals, preferences, routine, habits and recent patterns.',
+      'What it means for you, not a generic score.',
+      'One clear step that fits your real life, your next meal and your goal.',
+    ],
+    hideFooter: true,
     hideProgress: true,
+    hideHeader: true,
+    bgClass: 'bg-[#F3EEE6]',
   },
   {
     kind: 'question',
