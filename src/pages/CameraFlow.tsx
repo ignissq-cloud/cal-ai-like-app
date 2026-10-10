@@ -10,6 +10,9 @@ import type { AIAnalysisResult, MealType } from '../types';
 export default function CameraFlow() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Identifies the newest analysis; stale responses (superseded or cancelled
+  // by the user) are ignored so they can't hijack a retry.
+  const requestIdRef = useRef(0);
   const { profile, addLog } = useAppStore();
   
   const [step, setStep] = useState<'capture' | 'analyzing' | 'clarification' | 'confirm'>('capture');
@@ -40,11 +43,13 @@ export default function CameraFlow() {
   };
 
   const runAnalysis = async (base64Img: string, prevContext?: string, answer?: string) => {
+    const requestId = ++requestIdRef.current;
     setStep('analyzing');
     setError('');
     setAnalysisResult(null);
     try {
       const result = await analyzeFoodImage(base64Img, profile, answer ?? clarificationAnswer, prevContext);
+      if (requestId !== requestIdRef.current) return; // superseded or cancelled
       
       if (result.needsClarification) {
         setAnalysisResult(result);
@@ -54,9 +59,21 @@ export default function CameraFlow() {
         setStep('confirm');
       }
     } catch (err) {
+      if (requestId !== requestIdRef.current) return; // superseded or cancelled
       setError(err instanceof Error ? err.message : 'Analysis failed.');
       setStep('capture');
     }
+  };
+
+  // Leaving a step abandons any in-flight analysis so a late response can't
+  // override what the user is doing (important now requests can take up to 60s).
+  const handleBack = () => {
+    if (step === 'capture') {
+      navigate(-1);
+      return;
+    }
+    requestIdRef.current++;
+    setStep('capture');
   };
 
   const handleClarificationSubmit = () => {
@@ -95,7 +112,7 @@ export default function CameraFlow() {
     <div className="fixed inset-0 bg-background z-50 overflow-y-auto pb-24">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pt-safe bg-surface border-b border-slate-100">
-        <button onClick={() => step === 'capture' ? navigate(-1) : setStep('capture')} className="p-2 text-text-light">
+        <button onClick={handleBack} className="p-2 text-text-light">
           <ChevronLeft size={24} />
         </button>
         <h1 className="font-semibold">{step === 'capture' ? 'Log Food' : step === 'analyzing' ? 'Analyzing...' : step === 'clarification' ? 'Clarification' : 'Confirm'}</h1>

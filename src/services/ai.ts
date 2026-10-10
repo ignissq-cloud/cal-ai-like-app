@@ -22,7 +22,14 @@ export const analyzeFoodImage = async (
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Server error: ${response.status}`);
+      const serverMessage =
+        errorData && typeof errorData.error === 'string' ? errorData.error.trim() : '';
+      if (!serverMessage) {
+        // Non-JSON or malformed error body — log it for debugging,
+        // but never surface raw payloads to the user.
+        console.warn('AI analysis failed:', response.status, errorData);
+      }
+      throw new Error(serverMessage || 'The AI service hit a problem. Please try again.');
     }
 
     return await response.json();

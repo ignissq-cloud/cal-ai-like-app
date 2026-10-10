@@ -1,10 +1,15 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { Home, History, Settings as SettingsIcon, Plus } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import HistoryPage from './pages/HistoryPage';
 import Settings from './pages/Settings';
 import CameraFlow from './pages/CameraFlow';
 import ManualEntry from './pages/ManualEntry';
+import AuthPage from './pages/AuthPage';
+import { AuthProvider, AuthLoading } from './auth/AuthContext';
+import { useAuth } from './auth/context';
+import OnboardingFlow from './onboarding/OnboardingFlow';
+import { useOnboardingRecord } from './onboarding/storage';
 
 function BottomNav() {
   return (
@@ -37,17 +42,47 @@ function BottomNav() {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-background pb-24 font-sans text-text">
+      <AuthProvider>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/camera" element={<CameraFlow />} />
-          <Route path="/manual" element={<ManualEntry />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="*" element={<ProtectedShell />} />
         </Routes>
-        <BottomNav />
-      </div>
+      </AuthProvider>
     </Router>
+  );
+}
+
+// Everything except /login requires a signed-in user; the main app also
+// requires completed onboarding.
+function ProtectedShell() {
+  const { user, loading } = useAuth();
+  const { pathname } = useLocation();
+  const record = useOnboardingRecord(user?.uid);
+
+  // Session still restoring — wait rather than bouncing a signed-in user to /login.
+  if (loading) return <AuthLoading />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  const needsOnboarding = !record?.profile.onboardingCompleted;
+  const onOnboarding = pathname.startsWith('/onboarding');
+  const gate = needsOnboarding ? <Navigate to="/onboarding" replace /> : null;
+
+  return (
+    <div className={`min-h-screen bg-background font-sans text-text ${onOnboarding ? '' : 'pb-24'}`}>
+      <Routes>
+        <Route
+          path="/onboarding"
+          element={needsOnboarding ? <OnboardingFlow /> : <Navigate to="/" replace />}
+        />
+        <Route path="/" element={gate ?? <Dashboard />} />
+        <Route path="/history" element={gate ?? <HistoryPage />} />
+        <Route path="/settings" element={gate ?? <Settings />} />
+        <Route path="/camera" element={gate ?? <CameraFlow />} />
+        <Route path="/manual" element={gate ?? <ManualEntry />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      {!onOnboarding && <BottomNav />}
+    </div>
   );
 }
 

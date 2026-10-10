@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAppStore } from '../store';
+import { useAuth } from '../auth/context';
 import type { FoodItem, Profile } from '../types';
 
 const isFoodItem = (v: unknown): v is FoodItem => {
@@ -25,8 +26,10 @@ const isProfileObject = (v: unknown): v is Profile =>
 
 export default function Settings() {
   const { profile, updateProfile, clearAllData, logs, waterLogs, importData } = useAppStore();
+  const { user, signOut } = useAuth();
   const [formData, setFormData] = useState(profile);
   const [prevProfile, setPrevProfile] = useState(profile);
+  const [signingOut, setSigningOut] = useState(false);
 
   // Re-sync the draft when the persisted profile hydrates (or is cleared/imported).
   // Render-phase adjustment instead of an effect: no stale first-paint, no extra commit.
@@ -38,6 +41,17 @@ export default function Settings() {
   const handleSaveProfile = () => {
     updateProfile(formData);
     alert('Settings saved!');
+  };
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await signOut();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Sign out failed. Please try again.');
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   const handleClear = () => {
@@ -111,7 +125,19 @@ export default function Settings() {
         <h1 className="text-2xl font-bold">Settings</h1>
       </header>
 
-
+      <section className="bg-surface rounded-2xl p-5 shadow-sm border border-slate-100 mb-6 space-y-3">
+        <h2 className="font-semibold text-lg">Account</h2>
+        <p className="text-sm text-text-light break-all">
+          {user?.email || user?.displayName || 'Signed in'}
+        </p>
+        <button
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="w-full bg-background border border-slate-200 text-text font-medium p-3 rounded-xl text-sm hover:bg-slate-50 transition disabled:opacity-50"
+        >
+          {signingOut ? 'Signing out…' : 'Sign Out'}
+        </button>
+      </section>
 
       <section className="bg-surface rounded-2xl p-5 shadow-sm border border-slate-100 mb-6 space-y-4">
         <h2 className="font-semibold text-lg mb-2">Profile Details</h2>
