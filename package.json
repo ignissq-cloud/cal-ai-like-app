@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"vite\"",
+    "dev": "vite",
     "server": "node server.js",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
@@ -30,6 +30,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.67.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
@@ -42,6 +43,12 @@
     "tailwindcss": "^3.4.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
-    "vite-plugin-pwa": "^2.0.0"
+    "vite-plugin-pwa": "^2.0.0",
+    "wrangler": "^4.157.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "workerd@1.20261101.1": true,
+    "workerd@1.20261103.1": true
   }
 }
