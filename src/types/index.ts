@@ -31,6 +31,7 @@ export interface AIAnalysisResult extends NutritionData {
 
 export interface Profile {
   displayName?: string;
+  gender?: string;
   age?: string;
   height?: string;
   weight?: string;

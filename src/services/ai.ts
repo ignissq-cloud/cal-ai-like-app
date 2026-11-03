@@ -35,6 +35,15 @@ export const analyzeFoodImage = async (
     return await response.json();
   } catch (err) {
     console.error("AI Analysis failed:", err);
+    // TypeError with "fetch" in the message = network error (server not running or proxy misconfigured)
+    const isNetworkError = err instanceof TypeError && (
+      err.message.toLowerCase().includes('fetch') ||
+      err.message.toLowerCase().includes('network') ||
+      err.message.toLowerCase().includes('load')
+    );
+    if (isNetworkError) {
+      throw new Error("Cannot reach the analysis server. Make sure you have started the app with `npm run dev`.");
+    }
     throw new Error(err instanceof Error ? err.message : "Failed to analyze image. Please check your internet connection.");
   }
 };

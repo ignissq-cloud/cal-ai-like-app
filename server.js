@@ -14,11 +14,24 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// --- API key guard -----------------------------------------------------------
+const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+if (!GEMINI_KEY) {
+  console.error('[FATAL] GEMINI_API_KEY is not set. Add it to your .env file and restart.');
+  process.exit(1);
+}
+if (!GEMINI_KEY.startsWith('AIza')) {
+  console.warn(
+    '[WARNING] GEMINI_API_KEY does not look like a valid Gemini key (expected to start with "AIza").',
+    'Requests will likely hang or fail. Get a key at https://aistudio.google.com/app/apikey'
+  );
+}
+
+const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
 
 // --- Gemini request reliability ------------------------------------------------
 // Free tier: NO aggressive retries. Exactly one retry, only for a transient 503.
-const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS) || 60000;
+const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS) || 30000;
 const GEMINI_503_RETRY_DELAY_MS = 1500;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

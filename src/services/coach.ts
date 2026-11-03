@@ -1,4 +1,12 @@
-import type { OnboardingProfile } from '../onboarding/types';
+export interface OnboardingProfile {
+  displayName?: string;
+  primaryGoal?: string;
+  userGoals?: string[];
+  dietaryRestrictions?: string[];
+  allergies?: string;
+  activityLevel?: string;
+  [key: string]: unknown;
+}
 
 export interface CoachMessage {
   role: 'user' | 'assistant';
